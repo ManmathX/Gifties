@@ -1,0 +1,187 @@
+// schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // Or "mysql" / "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// --------------------------------------
+// Enums
+// --------------------------------------
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum ProductCategory {
+  CHOCOLATE
+  MYSTERY_BOX
+  FLOWERS
+  CUSTOM_GIFT
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum PaymentProvider {
+  STRIPE
+  PAYPAL
+  RAZORPAY
+  CASH_ON_DELIVERY
+}
+
+// --------------------------------------
+// User & Role Models
+// --------------------------------------
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  tents     Tent[]
+  orders    Order[]
+  reviews   Review[]
+}
+
+// --------------------------------------
+// Store (Tent) & Product Models
+// --------------------------------------
+
+model Tent {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  bannerImage String?
+  
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id])
+  products    Product[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Product {
+  id          String          @id @default(uuid())
+  name        String
+  description String
+  price       Decimal
+  stock       Int             @default(0)
+  category    ProductCategory
+  
+  // Specific details (e.g., { "flowerType": "Rose" })
+  details     Json?           
+
+  tentId      String
+  tent        Tent            @relation(fields: [tentId], references: [id])
+  images      ProductImage[]
+  orderItems  OrderItem[]
+  reviews     Review[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ProductImage {
+  id        String   @id @default(uuid())
+  url       String
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+// --------------------------------------
+// Order & Payment Models
+// --------------------------------------
+
+model Order {
+  id          String      @id @default(uuid())
+  
+  // User Relationship
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  
+  // Payment Relationship (One-to-One: One order has one main payment record)
+  payment     Payment?
+  
+  totalAmount Decimal
+  status      OrderStatus @default(PENDING)
+  
+  items       OrderItem[]
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Payment {
+  id            String          @id @default(uuid())
+  amount        Decimal
+  currency      String          @default("USD")
+  
+  status        PaymentStatus   @default(PENDING)
+  provider      PaymentProvider // e.g., STRIPE, CASH_ON_DELIVERY
+  
+  // External ID from the gateway (e.g., Stripe PaymentIntent ID)
+  // Optional because COD won't have one initially
+  transactionId String?         
+  
+  // Relationship back to Order
+  orderId       String          @unique
+  order         Order           @relation(fields: [orderId], references: [id])
+
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  
+  quantity  Int
+  price     Decimal 
+
+  // Customization for "With Photo" products
+  customizedPhotoUrl String? 
+  customizedMessage  String?
+}
+
+// --------------------------------------
+// Feedback
+// --------------------------------------
+
+model Review {
+  id        String   @id @default(uuid())
+  rating    Int
+  comment   String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  
+  createdAt DateTime @default(now())
+}
