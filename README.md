@@ -1,5 +1,4 @@
 # Giftiy - Gift Shop Platform
-ok
 A full-stack e-commerce platform for personalized gift stores. Users can browse and purchase gifts, while store owners can create their own "tents" (stores) to sell products.
 
 ## Features
