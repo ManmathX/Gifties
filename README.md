@@ -2,7 +2,7 @@
 A full-stack e-commerce platform for personalized gift stores. Users can browse and purchase gifts, while store owners can create their own "tents" (stores) to sell products.
 
 ## Features
-
+hi
 - 🎁 **Multi-Store Platform**: Users can create their own gift stores
 - 🛍️ **Product Categories**: Chocolates, Flowers, Mystery Boxes, Custom Gifts
 - 🛒 **Shopping Cart**: Persistent cart with customization options
